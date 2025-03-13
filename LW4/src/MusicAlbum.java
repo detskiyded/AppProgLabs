@@ -1,7 +1,9 @@
+import java.io.*;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class MusicAlbum implements Audio {
+
+public class MusicAlbum implements Audio, Serializable {
     // Необъявляемое исключение
     static class InvalidAdDurationException extends RuntimeException {
         public InvalidAdDurationException(String message) {
@@ -95,6 +97,30 @@ public class MusicAlbum implements Audio {
         }
         return timeWithoutAds;
     }
+
+    @Override
+    public void output(OutputStream out) throws IOException {
+        DataOutputStream dos = new DataOutputStream(out);
+        dos.writeUTF("MusicAlbum"); // Тип объекта
+        dos.writeUTF(name);         // Название
+        dos.writeUTF(author);       // Автор
+        dos.writeInt(time.length);  // Количество треков
+        for (int t : time) {
+            dos.writeInt(t);        // Длительности треков
+        }
+        dos.writeInt(adTime);       // Время рекламы
+    }
+    @Override
+    public void write(Writer out) throws IOException {
+        BufferedWriter bw = new BufferedWriter(out);
+        bw.write("MusicAlbum " + name + " " + author + " " + time.length);
+        for (int t : time) {
+            bw.write(" " + t);
+        }
+        bw.write(" " + adTime);
+        bw.newLine(); // Перенос строки
+    }
+
     @Override
     public String toString() {
         return String.format("""
@@ -102,7 +128,7 @@ public class MusicAlbum implements Audio {
                          name: %s
                          author: %s
                          time w/out ads: %d sec
-                         time w/out sub: %d sec
+                         time with ads: %d sec
                         """,
                 getName(), getAuthor(), getNoAdTime(), getTime());
     }

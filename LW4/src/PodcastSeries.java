@@ -1,7 +1,8 @@
+import java.io.*;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class MusicAlbum implements Audio {
+public class PodcastSeries implements Audio, Serializable {
     // Необъявляемое исключение
     static class InvalidAdDurationException extends RuntimeException {
         public InvalidAdDurationException(String message) {
@@ -21,27 +22,19 @@ public class MusicAlbum implements Audio {
     private int timeWithoutAds;
     private int adTime;
 
-    public MusicAlbum(String name, String author, int[] time, int adTime) throws InvalidTimeException {
+    public PodcastSeries(String name, String author, int[] time, int adTime) throws InvalidTimeException {
         this.name = name;
         this.author = author;
-
         if (adTime < 0) {
             throw new InvalidAdDurationException("Invalid ad time");
         }else{
             this.adTime = adTime;
         }
-
         validateTime(time);
         this.time = new int[time.length];
         for (int i = 0; i < time.length; i++){
             this.time[i] +=  time[i] + adTime;
         }
-    }
-    public MusicAlbum() {
-        this.name = "Unnamed";
-        this.author = "Unknown";
-        this.time = new int[0];
-        this.adTime = 0;
     }
     private void validateTime(int[] time) throws InvalidTimeException {
         for (int track : time) {
@@ -50,7 +43,6 @@ public class MusicAlbum implements Audio {
             }
         }
     }
-
 
     @Override
     public String getName() {
@@ -71,7 +63,7 @@ public class MusicAlbum implements Audio {
     @Override
     public int getTime() {
         int res = 0;
-        for (int track : time){
+        for (int track : time) {
             res += track;
         }
         return res;
@@ -90,19 +82,43 @@ public class MusicAlbum implements Audio {
     }
     @Override
     public int getNoAdTime(){
-        for (int j : time) {
-            timeWithoutAds += (j - adTime);
+        for (int track : time){
+            timeWithoutAds += track - adTime;
         }
         return timeWithoutAds;
     }
+
+    @Override
+    public void output(OutputStream out) throws IOException {
+        DataOutputStream dos = new DataOutputStream(out);
+        dos.writeUTF("PodcastSeries"); // Тип объекта
+        dos.writeUTF(name);         // Название
+        dos.writeUTF(author);       // Автор
+        dos.writeInt(time.length);  // Количество треков
+        for (int t : time) {
+            dos.writeInt(t);        // Длительности треков
+        }
+        dos.writeInt(adTime);       // Время рекламы
+    }
+    @Override
+    public void write(Writer out) throws IOException {
+        BufferedWriter bw = new BufferedWriter(out);
+        bw.write("PodcastSeries " + name + " " + author + " " + time.length);
+        for (int t : time) {
+            bw.write(" " + t);
+        }
+        bw.write(" " + adTime);
+        bw.newLine(); // Перенос строки
+    }
+
     @Override
     public String toString() {
         return String.format("""
-                        Music album
+                        Podcast series
                          name: %s
                          author: %s
                          time w/out ads: %d sec
-                         time w/out sub: %d sec
+                         time with ads: %d sec
                         """,
                 getName(), getAuthor(), getNoAdTime(), getTime());
     }
@@ -110,7 +126,7 @@ public class MusicAlbum implements Audio {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        MusicAlbum that = (MusicAlbum) o;
+        PodcastSeries that = (PodcastSeries) o;
         if (adTime != that.adTime) return false;
         if (!Objects.equals(name, that.name)) return false;
         if (!Objects.equals(author, that.author)) return false;

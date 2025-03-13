@@ -85,7 +85,7 @@ public class Vector {
         return max;
     }
 
-    // Сортировка вектора пузырькой
+    // Сортировка вектора пузырьком
     public void sort() {
         for (int i = 1; i < args.length; i++) {
             boolean isSorted = true;
